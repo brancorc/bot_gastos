@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuración de la ruta de Tesseract OCR (ajustar si es necesario)
-TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+#TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe' # desmarcar?
 
 # Configuración de la API de Google Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -35,9 +35,9 @@ def configurar_servicios():
     """
     print("Iniciando configuración de servicios...")
     # Configuración de Tesseract
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
-    if not os.path.exists(TESSERACT_PATH):
-        raise FileNotFoundError(f"Tesseract no se encontró en la ruta: {TESSERACT_PATH}")
+    #pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+    #if not os.path.exists(TESSERACT_PATH):
+        #raise FileNotFoundError(f"Tesseract no se encontró en la ruta: {TESSERACT_PATH}")
 
     # Configuración de Gemini
     if not GEMINI_API_KEY:
