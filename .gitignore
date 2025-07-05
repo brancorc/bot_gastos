@@ -1,0 +1,13 @@
+# Ignorar el entorno virtual
+venv/
+
+# Ignorar archivos de configuración secretos
+.env
+credentials.json
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# Archivos temporales de tickets
+temp_*.jpg
