@@ -71,7 +71,7 @@ def procesar_en_segundo_plano(media_url: str, sender_number: str):
     try:
         # Notificamos al usuario...
         twilio_client.messages.create(
-            body="Imagen recibida. Analizando el ticket, banca un toque :v",  
+            body="📸👁️ Imagen recibida. Analizando el ticket...",  
             from_=TWILIO_NUMBER,
             to=sender_number
         )
@@ -150,7 +150,7 @@ def whatsapp_reply():
     else:
         # Si el mensaje no tiene imagen, respondemos directamente con instrucciones.
         resp = MessagingResponse()
-        resp.message("Me tenes que pasar una foto del ticket, si no me mandas una foto del ticket no se que mierda queres que haga")
+        resp.message("Hola Branco, para registrar un gasto, envía una imagen del ticket de compra. 😉 ")
         return str(resp)
     
     # Si se inició un hilo, devolvemos una respuesta vacía con código 204.

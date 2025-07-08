@@ -90,6 +90,7 @@ def extraer_texto_de_imagen(ruta_imagen: str) -> str:
     # Devolvemos el texto extraído.
     return texto
 
+    #Esta funcion esta preparada para recibir una imagen en modo "documento"...
 
 def analizar_texto_con_gemini(texto_ticket: str) -> dict | None:
     """
@@ -254,7 +255,7 @@ if __name__ == "__main__":
         configurar_servicios()
         
         # Definimos la imagen que vamos a usar para la prueba.
-        IMAGEN_A_PROCESAR = "tickets/t1.jpg" 
+        IMAGEN_A_PROCESAR = "ticket1.jpg" 
         
         # Llamamos a nuestra función "jefe de planta".
         exito = procesar_gasto_completo(IMAGEN_A_PROCESAR)

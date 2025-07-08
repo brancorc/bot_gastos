@@ -1,4 +1,4 @@
-# Dockerfile (Versión Final con la dependencia de OpenCV)
+# Dockerfile
 
 # 1. Base: Python 3.11-slim
 FROM python:3.11-slim

@@ -1,4 +1,4 @@
-# requirements.txt (Versión Limpia)
+# requirements.txt
 
 # Framework web y servidor de producción
 Flask
