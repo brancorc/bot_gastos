@@ -19,6 +19,10 @@ except Exception as e:
 
 app = Flask(__name__)
 
+@app.route("/")
+def index():
+    return "¡Hola! Soy el Bot de Gastos y estoy funcionando correctamente.", 200
+
 # Credenciales de Twilio
 account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
 auth_token = os.environ.get('TWILIO_AUTH_TOKEN')

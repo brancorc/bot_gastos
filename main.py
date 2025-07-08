@@ -217,7 +217,6 @@ def procesar_gasto_completo(ruta_imagen: str):
     except Exception as e:
         print(f"[ERROR CRÍTICO] Ocurrió un error inesperado en el proceso: {e}")
 
-
 # --- 5. PUNTO DE ENTRADA DEL SCRIPT ---
 # Esta parte solo se ejecuta cuando corres el archivo directamente (python main.py).
 # Es nuestro campo de pruebas.
