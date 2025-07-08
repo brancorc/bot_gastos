@@ -56,9 +56,3 @@ El sistema está diseñado con una arquitectura robusta y modular, separando la 
 4.  Un **hilo de trabajo (`worker thread`)** toma la tarea de la cola.
 5.  El worker descarga la imagen, la procesa con **Tesseract y Gemini**, y guarda los datos en **Google Sheets**.
 6.  Durante el proceso, el worker utiliza la **API REST de Twilio** para enviar mensajes de estado ("Procesando...", "¡Completado!") al usuario.
-
-  
-*(Opcional: puedes crear un diagrama de flujo simple con una herramienta como draw.io o excalidraw y subir la imagen a un host como imgur para enlazarla aquí).*
-
----
-*Este proyecto representa un ciclo completo de desarrollo de software, desde la conceptualización de una idea hasta su implementación y despliegue en un entorno de producción en la nube.*
