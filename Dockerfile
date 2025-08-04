@@ -1,26 +1,20 @@
-# Dockerfile
-
-# 1. Base: Python 3.11-slim
+# 1. Imagen base de Python
 FROM python:3.11-slim
 
-# 2. Directorio de Trabajo
-WORKDIR /app
-
-# 3. Instalación de Dependencias del Sistema
-# ¡AÑADIMOS libgl1 A LA LISTA!
-RUN apt-get update && apt-get install -y \
+# 2. Instalar dependencias del sistema operativo (Tesseract + OpenCV)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-spa \
-    libgl1 \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
-# 4. Copiamos y instalamos requerimientos de Python.
+# 3. Configurar el entorno de la aplicación
+WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# 5. Copiamos el resto del código de nuestra aplicación.
 COPY . .
 
-# 6. Comando para arrancar el servidor.
-CMD ["gunicorn", "bot_server:app", "--bind", "0.0.0.0:10000", "--timeout", "120"]
+# 4. Comando para iniciar el servidor
+# Render nos dará el puerto a usar en la variable de entorno $PORT
+CMD ["gunicorn", "--bind", "0.0.0.0:${PORT}", "bot_server:app"]
