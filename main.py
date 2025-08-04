@@ -53,7 +53,7 @@ def analizar_texto_con_gemini(texto_ticket: str) -> dict | None:
     prompt = f"""
     Tu única función es analizar el texto de un ticket y extraer dos datos en formato JSON.
     Tu respuesta DEBE SER solo el JSON. Estructura: {{ "total": float, "categoria": "string" }}
-    Reglas de categoría: Elige una de ["Materia Prima", "Descartables", "Servicios", "Gastos Fijos", "Gastos Operativos", "Gastos de Mantenimiento", "Otros Gastos"].
+    Reglas de categoría: Elige EXCLUSIVAMENTE una de estas categorias, NO incluyas otras: ["Materia Prima", "Descartables", "Servicios", "Gastos Fijos", "Gastos Operativos", "Gastos de Mantenimiento", "Otros Gastos"]. y el precio total de la compra.
     Texto a procesar: {texto_ticket}
     Salida JSON:
     """
