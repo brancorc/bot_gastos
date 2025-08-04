@@ -17,4 +17,4 @@ COPY . .
 
 # 4. Comando para iniciar el servidor
 # Render nos dará el puerto a usar en la variable de entorno $PORT
-CMD ["gunicorn", "--bind", "0.0.0.0:${PORT}", "bot_server:app"]
+CMD gunicorn --bind 0.0.0.0:${PORT} bot_server:app
