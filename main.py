@@ -1,4 +1,4 @@
-# main.py - VERSIÓN FINAL CON CLOUDINARY
+# main.py - VERSIÓN CORREGIDA CON TOKEN DE AUTENTICACIÓN
 
 import os
 import json
@@ -16,7 +16,8 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 COMANDA_CENTRAL_API_URL = os.getenv("COMANDA_CENTRAL_API_URL")
-# Nuevas variables para Cloudinary
+# NUEVA VARIABLE PARA EL TOKEN
+COMANDA_CENTRAL_API_TOKEN = os.getenv("COMANDA_CENTRAL_API_TOKEN") 
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
@@ -28,6 +29,8 @@ def configurar_servicios():
     print("Iniciando configuración de servicios...")
     if not GEMINI_API_KEY: raise ValueError("GEMINI_API_KEY no encontrada.")
     if not COMANDA_CENTRAL_API_URL: raise ValueError("COMANDA_CENTRAL_API_URL no encontrada.")
+    # NUEVO CHEQUEO PARA EL TOKEN
+    if not COMANDA_CENTRAL_API_TOKEN: raise ValueError("COMANDA_CENTRAL_API_TOKEN no encontrado.")
     if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
         raise ValueError("Credenciales de Cloudinary no encontradas en .env")
     
@@ -59,10 +62,18 @@ def analizar_texto_con_gemini(texto_ticket: str) -> dict | None:
     """
     try:
         response = model.generate_content(prompt)
-        texto_json = response.text.strip().replace("```json", "").replace("```", "").strip()
+        # Limpieza de la respuesta de la IA mejorada
+        texto_json_crudo = response.text.strip()
+        # Encuentra el inicio y fin del JSON para evitar texto extra
+        inicio_json = texto_json_crudo.find('{')
+        fin_json = texto_json_crudo.rfind('}') + 1
+        if inicio_json == -1 or fin_json == 0:
+            print(f"Respuesta de la IA no contiene un JSON válido: {texto_json_crudo}")
+            return None
+        texto_json = texto_json_crudo[inicio_json:fin_json]
         return json.loads(texto_json)
     except Exception as e:
-        print(f"Error en Gemini: {e}")
+        print(f"Error en Gemini o al parsear JSON: {e}")
         return None
 
 def subir_imagen_a_cloudinary(ruta_imagen: str) -> str | None:
@@ -77,22 +88,32 @@ def subir_imagen_a_cloudinary(ruta_imagen: str) -> str | None:
         return None
 
 def guardar_gasto_en_api(datos_gasto: dict) -> bool:
-    """ESTACIÓN 4: El Registrador de Gastos."""
-    # --- BLOQUE CORREGIDO ---
+    """ESTACIÓN 4: El Registrador de Gastos (MODIFICADO para enviar el token)."""
     try:
         url_endpoint = f"{COMANDA_CENTRAL_API_URL}/api/gastos"
-        response = requests.post(url_endpoint, json=datos_gasto)
-        response.raise_for_status() # Lanza un error si el status no es 2xx
+        
+        # Preparamos la cabecera de autenticación
+        headers = {
+            "Authorization": f"Bearer {COMANDA_CENTRAL_API_TOKEN}"
+        }
+        
+        # Hacemos la petición POST incluyendo la cabecera
+        response = requests.post(url_endpoint, json=datos_gasto, headers=headers)
+        
+        # Lanza un error si el status no es 2xx (ej. 401, 403, 500)
+        response.raise_for_status() 
+        
         print(f"-> Gasto registrado con éxito en Comanda Central. Status: {response.status_code}")
         return True
-    except requests.exceptions.RequestException as e: # Sintaxis correcta de Python
+    except requests.exceptions.RequestException as e:
         print(f"Error al contactar la API: {e}")
+        # Este bloque ahora imprimirá el error exacto que devuelve Comanda Central
         if e.response is not None: 
-            print(f"Respuesta del servidor: {e.response.text}")
+            print(f"Respuesta del servidor ({e.response.status_code}): {e.response.text}")
         return False
-    # --- FIN DEL BLOQUE CORREGIDO ---
 
 # --- FUNCIÓN PRINCIPAL (ORQUESTACIÓN) ---
+# (Sin cambios en esta función)
 def procesar_gasto_completo(ruta_imagen: str) -> bool:
     try:
         print("-" * 50)
@@ -130,7 +151,6 @@ def procesar_gasto_completo(ruta_imagen: str) -> bool:
 if __name__ == "__main__":
     try:
         configurar_servicios()
-        # Asegúrate de tener una imagen llamada 'ticket1.jpg' en la misma carpeta para probar
         IMAGEN_A_PROCESAR = "ticket1.jpg" 
         
         if os.path.exists(IMAGEN_A_PROCESAR):
