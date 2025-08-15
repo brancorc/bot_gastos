@@ -16,6 +16,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-# 4. Comando para iniciar el servidor (LÍNEA CORREGIDA)
-# Se añade 'python -u -m' para forzar que la salida no tenga buffer y los logs aparezcan al instante.
-CMD ["python", "-u", "-m", "gunicorn", "--bind", "0.0.0.0:${PORT}", "bot_server:app"]
+# 4. Comando para iniciar el servidor (SINTAXIS FINAL CORREGIDA)
+# Usamos el "shell form" para que ${PORT} funcione, y añadimos 'python -u' al principio.
+CMD python -u -m gunicorn --bind 0.0.0.0:${PORT} bot_server:app
