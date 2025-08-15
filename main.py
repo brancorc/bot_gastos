@@ -1,4 +1,4 @@
-# main.py - VERSIÓN CORREGIDA CON TOKEN DE AUTENTICACIÓN
+# main.py - VERSIÓN FINAL CON IA ROBUSTA
 
 import os
 import json
@@ -16,7 +16,6 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 COMANDA_CENTRAL_API_URL = os.getenv("COMANDA_CENTRAL_API_URL")
-# NUEVA VARIABLE PARA EL TOKEN
 COMANDA_CENTRAL_API_TOKEN = os.getenv("COMANDA_CENTRAL_API_TOKEN") 
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
@@ -29,7 +28,6 @@ def configurar_servicios():
     print("Iniciando configuración de servicios...")
     if not GEMINI_API_KEY: raise ValueError("GEMINI_API_KEY no encontrada.")
     if not COMANDA_CENTRAL_API_URL: raise ValueError("COMANDA_CENTRAL_API_URL no encontrada.")
-    # NUEVO CHEQUEO PARA EL TOKEN
     if not COMANDA_CENTRAL_API_TOKEN: raise ValueError("COMANDA_CENTRAL_API_TOKEN no encontrado.")
     if not all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET]):
         raise ValueError("Credenciales de Cloudinary no encontradas en .env")
@@ -49,11 +47,13 @@ def extraer_texto_de_imagen(ruta_imagen: str) -> str:
     gris = cv2.cvtColor(imagen_cv, cv2.COLOR_BGR2GRAY)
     return pytesseract.image_to_string(gris, lang='spa', config=r'--oem 3 --psm 4')
 
+# --- FUNCIÓN DE ANÁLISIS DE IA "BLINDADA" ---
 def analizar_texto_con_gemini(texto_ticket: str) -> dict | None:
-    """ESTACIÓN 2: El Analista (IA)."""
-    generation_config = {"temperature": 0.0}
+    """ESTACIÓN 2: El Analista (IA) - Versión robusta."""
+    generation_config = {"temperature": 0.0, "response_mime_type": "application/json"}
     model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
-    # Prompt mejorado.
+    
+    # Prompt mejorado: más directo y con un ejemplo.
     prompt = f"""
     Analiza el siguiente texto de un ticket de compra.
     Tu única y exclusiva salida debe ser un objeto JSON válido, sin texto adicional, explicaciones ni markdown.
@@ -67,23 +67,31 @@ def analizar_texto_con_gemini(texto_ticket: str) -> dict | None:
     ---
     """
     try:
+        print("-> Solicitando análisis a la IA...")
         response = model.generate_content(prompt)
-        # Limpieza de la respuesta de la IA mejorada
+        
+        # El modelo ahora debería devolver JSON directamente gracias a `response_mime_type`.
+        # Este código de limpieza se mantiene como una segunda capa de seguridad.
         texto_json_crudo = response.text.strip()
-        # Encuentra el inicio y fin del JSON para evitar texto extra
+        
+        # Búsqueda robusta del JSON en la respuesta
         inicio_json = texto_json_crudo.find('{')
         fin_json = texto_json_crudo.rfind('}') + 1
-        if inicio_json == -1 or fin_json == 0:
-            print(f"Respuesta de la IA no contiene un JSON válido: {texto_json_crudo}")
+
+        if inicio_json != -1 and fin_json != 0:
+            texto_json = texto_json_crudo[inicio_json:fin_json]
+            print(f"-> IA respondió con JSON: {texto_json}")
+            return json.loads(texto_json)
+        else:
+            print(f"-> ERROR: La IA no devolvió un JSON válido. Respuesta recibida: {texto_json_crudo}")
             return None
-        texto_json = texto_json_crudo[inicio_json:fin_json]
-        return json.loads(texto_json)
+            
     except Exception as e:
-        print(f"Error en Gemini o al parsear JSON: {e}")
+        print(f"-> ERROR: Excepción durante el análisis de la IA o al procesar su respuesta: {e}")
         return None
 
 def subir_imagen_a_cloudinary(ruta_imagen: str) -> str | None:
-    """ESTACIÓN 3: Sube la imagen a Cloudinary y devuelve una URL segura."""
+    """ESTACIÓN 3: Sube la imagen a Cloudinary."""
     try:
         print("Subiendo imagen a Cloudinary...")
         upload_result = cloudinary.uploader.upload(ruta_imagen, folder="tickets_gastos")
@@ -94,52 +102,43 @@ def subir_imagen_a_cloudinary(ruta_imagen: str) -> str | None:
         return None
 
 def guardar_gasto_en_api(datos_gasto: dict) -> bool:
-    """ESTACIÓN 4: El Registrador de Gastos (MODIFICADO para enviar el token)."""
+    """ESTACIÓN 4: El Registrador de Gastos."""
     try:
         url_endpoint = f"{COMANDA_CENTRAL_API_URL}/api/gastos"
-        
-        # Preparamos la cabecera de autenticación
-        headers = {
-            "Authorization": f"Bearer {COMANDA_CENTRAL_API_TOKEN}"
-        }
-        
-        # Hacemos la petición POST incluyendo la cabecera
+        headers = {"Authorization": f"Bearer {COMANDA_CENTRAL_API_TOKEN}"}
         response = requests.post(url_endpoint, json=datos_gasto, headers=headers)
-        
-        # Lanza un error si el status no es 2xx (ej. 401, 403, 500)
         response.raise_for_status() 
-        
         print(f"-> Gasto registrado con éxito en Comanda Central. Status: {response.status_code}")
         return True
     except requests.exceptions.RequestException as e:
-        print(f"Error al contactar la API: {e}")
-        # Este bloque ahora imprimirá el error exacto que devuelve Comanda Central
+        print(f"Error al contactar la API de Comanda Central: {e}")
         if e.response is not None: 
             print(f"Respuesta del servidor ({e.response.status_code}): {e.response.text}")
         return False
 
 # --- FUNCIÓN PRINCIPAL (ORQUESTACIÓN) ---
-# (Sin cambios en esta función)
 def procesar_gasto_completo(ruta_imagen: str) -> bool:
     try:
         print("-" * 50)
         print(f"Iniciando procesamiento para: {ruta_imagen}")
 
         texto_crudo = extraer_texto_de_imagen(ruta_imagen)
-        if not texto_crudo.strip(): 
-            print("-> Fallo: No se pudo extraer texto.")
-            return False
-        
-        url_imagen_publica = subir_imagen_a_cloudinary(ruta_imagen)
-        if not url_imagen_publica: 
-            print("-> Fallo: No se pudo subir la imagen.")
+        if not texto_crudo or not texto_crudo.strip(): 
+            print("-> Fallo: No se pudo extraer texto de la imagen (OCR).")
             return False
         
         datos_ia = analizar_texto_con_gemini(texto_crudo)
         if not datos_ia or 'total' not in datos_ia or 'categoria' not in datos_ia: 
             print("-> Fallo: El análisis de la IA no produjo resultados válidos.")
+            # Si la IA falla, no subimos la imagen para no gastar recursos
             return False
-        
+            
+        url_imagen_publica = subir_imagen_a_cloudinary(ruta_imagen)
+        if not url_imagen_publica: 
+            print("-> Fallo: No se pudo subir la imagen a Cloudinary.")
+            # Usamos un texto placeholder si la subida falla pero la IA funcionó
+            url_imagen_publica = "Error al subir imagen"
+
         datos_finales = {
             "fecha": date.today().isoformat(),
             "concepto": url_imagen_publica,
@@ -153,8 +152,8 @@ def procesar_gasto_completo(ruta_imagen: str) -> bool:
         print(f"[ERROR CRÍTICO] Proceso falló: {e}")
         return False
 
-# --- PUNTO DE ENTRADA DEL SCRIPT (PARA PRUEBAS LOCALES) ---
 if __name__ == "__main__":
+    #... (el bloque de pruebas locales no cambia)
     try:
         configurar_servicios()
         IMAGEN_A_PROCESAR = "ticket1.jpg" 
