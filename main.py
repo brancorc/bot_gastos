@@ -53,12 +53,18 @@ def analizar_texto_con_gemini(texto_ticket: str) -> dict | None:
     """ESTACIÓN 2: El Analista (IA)."""
     generation_config = {"temperature": 0.0}
     model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+    # Prompt mejorado.
     prompt = f"""
-    Tu única función es analizar el texto de un ticket y extraer dos datos en formato JSON.
-    Tu respuesta DEBE SER solo el JSON. Estructura: {{ "total": float, "categoria": "string" }}
-    Reglas de categoría: Elige EXCLUSIVAMENTE una de estas categorias, NO incluyas otras: ["Materia Prima", "Descartables", "Servicios", "Gastos Fijos", "Gastos Operativos", "Gastos de Mantenimiento", "Otros Gastos"]. y el precio total de la compra.
-    Texto a procesar: {texto_ticket}
-    Salida JSON:
+    Analiza el siguiente texto de un ticket de compra.
+    Tu única y exclusiva salida debe ser un objeto JSON válido, sin texto adicional, explicaciones ni markdown.
+    El JSON debe tener esta estructura: {{ "total": float, "categoria": "string" }}
+    Elige la categoría estrictamente de esta lista: ["Materia Prima", "Descartables", "Servicios", "Gastos Fijos", "Gastos Operativos", "Gastos de Mantenimiento", "Otros Gastos"].
+    Si no puedes determinar un valor, usa 0.0 para el total o "Otros Gastos" para la categoría.
+
+    Texto del ticket:
+    ---
+    {texto_ticket}
+    ---
     """
     try:
         response = model.generate_content(prompt)
